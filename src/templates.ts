@@ -151,30 +151,52 @@ ${cards}
   });
 }
 
-/** RSS 2.0 feed. */
-export function renderFeed(config: SiteConfig, posts: Post[]): string {
+/**
+ * RSS 2.0 feed. Includes each post's tags as `<category>` entries, an
+ * `atom:link rel="self"` self-reference, and full rendered content via
+ * `content:encoded` (in addition to the plain-text `description` excerpt).
+ * `buildDate` is stamped as the channel's `lastBuildDate`.
+ */
+export function renderFeed(
+  config: SiteConfig,
+  posts: Post[],
+  buildDate: Date,
+): string {
+  const feedUrl = `${config.url}/feed.xml`;
   const items = posts
     .slice(0, 20)
     .map((post) => {
       const link = `${config.url}/${post.outputPath}`;
+      const categories = post.tags
+        .map((t) => `      <category>${escapeHtml(t)}</category>`)
+        .join("\n");
       return `    <item>
       <title>${escapeHtml(post.title)}</title>
       <link>${escapeHtml(link)}</link>
-      <guid>${escapeHtml(link)}</guid>
+      <guid isPermaLink="true">${escapeHtml(link)}</guid>
       <pubDate>${post.date.toUTCString()}</pubDate>
-      <description>${escapeHtml(post.description)}</description>
+      <author>${escapeHtml(post.author)}</author>
+${categories ? `${categories}\n` : ""}      <description>${escapeHtml(post.description)}</description>
+      <content:encoded><![CDATA[${cdataSafe(post.html)}]]></content:encoded>
     </item>`;
     })
     .join("\n");
   return `<?xml version="1.0" encoding="UTF-8"?>
-<rss version="2.0">
+<rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom" xmlns:content="http://purl.org/rss/1.0/modules/content/">
   <channel>
     <title>${escapeHtml(config.title)}</title>
     <link>${escapeHtml(config.url)}</link>
+    <atom:link href="${escapeHtml(feedUrl)}" rel="self" type="application/rss+xml"/>
     <description>${escapeHtml(config.description)}</description>
     <language>en</language>
+    <lastBuildDate>${buildDate.toUTCString()}</lastBuildDate>
 ${items}
   </channel>
 </rss>
 `;
+}
+
+/** Neutralise any accidental `]]>` so HTML can live safely inside a CDATA block. */
+function cdataSafe(html: string): string {
+  return html.replace(/]]>/g, "]]]]><![CDATA[>");
 }

@@ -97,7 +97,7 @@ export async function build(
   }
 
   // RSS feed.
-  await emit(outDir, "feed.xml", renderFeed(config, posts));
+  await emit(outDir, "feed.xml", renderFeed(config, posts, new Date()));
 
   // Static assets (copied verbatim, overwriting generated files if named alike).
   const publicDir = resolve(rootDir, config.publicDir);

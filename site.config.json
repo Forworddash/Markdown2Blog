@@ -1,0 +1,10 @@
+{
+  "title": "Markdown2Blog",
+  "description": "A tiny, fast blog generated from markdown files.",
+  "url": "https://example.com",
+  "author": "Sam",
+  "contentDir": "content",
+  "publicDir": "public",
+  "outDir": "site",
+  "includeDrafts": false
+}
